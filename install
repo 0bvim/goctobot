@@ -1,0 +1,44 @@
+#!/bin/env bash
+
+# Define the dependencies
+dependencies=("curl" "git" "jq" "go")
+
+# Array to track missing dependencies
+missing=()
+
+# Function to check if a dependency is installed
+need() {
+    if ! command -v "$1" &> /dev/null
+    then
+        missing+=("$1")
+    fi
+}
+
+# Loop through the dependencies and check each one
+for dependency in "${dependencies[@]}"
+do
+    need "$dependency"
+done
+
+# Check if there are any missing dependencies
+if [ ${#missing[@]} -ne 0 ]
+then
+    echo "The following dependencies are missing: ${missing[*]}"
+    echo "Please install the missing dependencies and try again."
+    exit 1
+else
+    echo "All dependencies are installed."
+fi
+
+# finish later
+
+git clone https://github.com/X3ric/octobot
+cd octobot
+chmod +x "./ghbot"
+if [[ ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
+    cp "./ghbot" "$HOME/.local/bin"
+else
+    sudo cp "./ghbot" "/usr/bin"
+fi 
+cd ..
+rm -rf octobot

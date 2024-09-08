@@ -1,0 +1,246 @@
+#!/bin/bash
+# Bash OctoBot
+
+if [[ -z "$personal_github_token" ]]; then
+cat << EOF
+Error: 'personal_github_token' environment variable not set.
+
+To resolve this:
+1. Generate a GitHub personal access token with the 'user:follow' and 'read:user' scopes at https://github.com/settings/tokens.
+2. Set the token in your environment with:
+   export personal_github_token="your_token_here"
+3. To make this change permanent, add it to your '~/.bashrc' with:
+   echo 'export personal_github_token="your_token_here"' >> ~/.bashrc
+   source ~/.bashrc
+
+After setting up the token, you can run OctoBot commands with:
+   ghbot <command> [username]
+
+For more details, visit the GitHub repository.
+EOF
+  exit 1
+fi
+
+github_user=$(curl -s -H "Authorization: token $personal_github_token" https://api.github.com/user | jq -r '.login')
+rate_limit_count_file=$(mktemp /tmp/rate_limit_count.XXXXXX)
+
+handle_rate_limit() {
+  local count=$(cat "$rate_limit_count_file" 2>/dev/null || echo 0)
+  count=$((count + 1))
+  local delay=$((60 * count))
+  echo "Rate limit exceeded. Waiting for ${delay}s ..."
+  sleep "$delay"
+  echo "$count" > "$rate_limit_count_file"
+}
+
+fetch_data() {
+  local url="$1"
+  local all_data=()
+  while [[ -n "$url" ]]; do
+    local response=$(curl -s -H "Authorization: token $personal_github_token" "$url")
+    local status_code=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $personal_github_token" "$url")
+    if [[ "$status_code" -eq 429 ]]; then
+      handle_rate_limit
+      continue
+    fi
+    all_data+=($(echo "$response" | jq -r '.[] | .login'))
+    url=$(curl -sI -H "Authorization: token $personal_github_token" "$url" | grep -i '^Link:' | sed -e 's/.*<\(https:\/\/api.github.com\/[^\"]*\)>; rel="next".*/\1/')
+  done
+  echo "${all_data[@]}"
+}
+
+fetch_followers() {
+    local user="$1"
+    local page=1
+    local per_page=100
+    local all_followers=()
+    local followers_url="https://api.github.com/users/$user/followers?per_page=$per_page&page="
+    while :; do
+        local response=$(curl -s -H "Authorization: token $personal_github_token" "${followers_url}${page}")
+        if [[ "$response" == *"API rate limit exceeded"* ]]; then
+            handle_rate_limit
+            response=$(curl -s -H "Authorization: token $personal_github_token" "${followers_url}${page}")
+        fi
+        local followers=$(echo "$response" | jq -r '.[].login')
+        if [[ -z "$followers" ]]; then
+            break
+        fi
+        all_followers+=($followers)
+        if [[ $(echo "$response" | jq '. | length') -lt $per_page ]]; then
+            break
+        fi
+        page=$((page + 1))
+    done
+    echo "${all_followers[@]}"
+}
+
+fetch_following() {
+    local user="$1"
+    local page=1
+    local per_page=100
+    local all_following=()
+    local following_url="https://api.github.com/users/$user/following?per_page=$per_page&page="
+    while :; do
+        local response=$(curl -s -H "Authorization: token $personal_github_token" "${following_url}${page}")
+        if [[ "$response" == *"API rate limit exceeded"* ]]; then
+            handle_rate_limit
+            response=$(curl -s -H "Authorization: token $personal_github_token" "${following_url}${page}")
+        fi
+        local following=$(echo "$response" | jq -r '.[].login')
+        if [[ -z "$following" ]]; then
+            break
+        fi
+        all_following+=($following)
+        if [[ $(echo "$response" | jq '. | length') -lt $per_page ]]; then
+            break
+        fi
+        page=$((page + 1))
+    done
+    echo "${all_following[@]}"
+}
+
+follow_user() {
+    local user="$1"
+    local user_info=$(curl -s -H "Authorization: token $personal_github_token" "https://api.github.com/users/$user")
+    local followers=$(echo "$user_info" | jq -r '.followers')
+    local following=$(echo "$user_info" | jq -r '.following')
+    if [[ "$followers" == "null" || "$following" == "null" ]]; then
+        #echo "User $user not found or profile is private."
+        return
+    fi
+    if [[ "$followers" -eq 0 && "$following" -eq 0 ]]; then
+        #echo "User $user has 0 followers and 0 following. Possibly a private profile or new account."
+        return
+    fi
+    local response=$(curl -s -o /dev/null -w "%{http_code}" -X PUT -H "Authorization: token $personal_github_token" "https://api.github.com/user/following/$user")
+    case "$response" in
+        "204")
+            echo "User: $user has been followed!"
+            ;;
+        "403"|"429")
+            echo "Error following $user: Forbidden. Handling rate limit..."
+            handle_rate_limit
+            follow_user "$user"
+            ;;
+        "404")
+            echo "Error following $user: User not found or profile is private."
+            ;;
+        "422")
+            echo "Error following $user: User already followed or invalid request."
+            ;;
+        *)
+            echo "Error following $user: $response"
+            exit 1
+            ;;
+    esac
+}
+
+unfollow_user() {
+    local user="$1"
+    local user_info=$(curl -s -H "Authorization: token $personal_github_token" "https://api.github.com/users/$user")
+    local followers=$(echo "$user_info" | jq -r '.followers')
+    local following=$(echo "$user_info" | jq -r '.following')
+    if [[ "$followers" == "null" || "$following" == "null" ]]; then
+        #echo "User $user not found or profile is private."
+        return
+    fi
+    if [[ "$followers" -eq 0 && "$following" -eq 0 ]]; then
+        #echo "User $user has 0 followers and 0 following. Possibly a private profile or new account."
+        return
+    fi
+    local response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token $personal_github_token" "https://api.github.com/user/following/$user")
+    case "$response" in
+        "204")
+            echo "User: $user has been unfollowed!"
+            ;;
+        "403"|"429")
+            echo "Error unfollowing $user: Forbidden. Handling rate limit..."
+            handle_rate_limit
+            unfollow_user "$user"
+            ;;
+        *)
+            echo "Error unfollowing $user: $response"
+            exit 1
+            ;;
+    esac
+}
+
+process_users() {
+  local users=("$@")
+  local max_jobs=10
+  local job_count=0
+  for user in "${users[@]}"; do
+    if [[ "$command" == "unfollow" ]]; then
+      unfollow_user "$user"
+    elif [[ "$command" == "follow" ]]; then
+      follow_user "$user"
+    fi
+    ((job_count++))
+    if [[ $job_count -ge $max_jobs ]]; then
+      wait -n
+      job_count=$((job_count - 1))
+    fi
+  done
+  wait
+}
+
+cleanup() {
+  rm -f "$rate_limit_count_file"
+  exit 0
+}
+
+trap cleanup SIGINT EXIT
+
+command="$1"
+target_user="${2:-}"
+
+case "$command" in
+  "unfollow")
+    following=($(fetch_following "$github_user"))
+    followers=($(fetch_followers "$github_user"))
+    users_to_unfollow=()
+    for user in "${following[@]}"; do
+      if [[ ! " ${followers[@]} " =~ " $user " && "$user" != "$github_user" ]]; then
+        users_to_unfollow+=("$user")
+      fi
+    done
+    process_users "${users_to_unfollow[@]}"
+    ;;
+  "followers")
+    followers=($(fetch_followers "$github_user"))
+    echo "You have ${#followers[@]} followers."
+    ;;
+  "following")
+    following=($(fetch_following "$github_user"))
+    echo "You follow ${#following[@]} users."
+    ;;
+  "follow")
+    if [[ -z "$target_user" ]]; then
+      read -p "User to fetch? " target_user
+    fi
+    followers=($(fetch_followers "$target_user"))
+    following=($(fetch_following "$github_user"))
+    users_to_follow=()
+    for user in "${followers[@]}"; do
+      if [[ ! " ${following[@]} " =~ " $user " && "$user" != "$github_user" ]]; then
+        users_to_follow+=("$user")
+      fi
+    done
+    process_users "${users_to_follow[@]}"
+    ;;
+  *)
+cat << EOF
+Invalid option: $command
+
+Usage:
+ ghbot followers             # Display the count of your followers
+ ghbot following             # Display the count of users you follow
+ ghbot follow [username]     # Follow users who follow the specified username
+ ghbot unfollow              # Unfollow users who do not follow you back
+
+EOF
+    exit 1
+    ;;
+esac
+echo -e "Operation completed!"
+cleanup
