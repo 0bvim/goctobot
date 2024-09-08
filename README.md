@@ -1,5 +1,12 @@
 <div align="center">
-<h1>I started development of this program in golang in feature/golang_implementation branch</h1>
+<h1>I started development of this program in golang</h1>
+<p>I don't use a fork because I can't open issue and for a while I'll need it. </p>
+<p>Here is original repository</p>
+  
+<a href="https://github.com/X3ric/octobot/tree/main" target="_blank" rel="noopener noreferrer">
+  Visit OctoBot Repository on GitHub
+</a>
+
 
 # OctoBot
 
