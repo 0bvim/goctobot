@@ -5,7 +5,6 @@ import (
 	"os"
 )
 
-// To print text with colors
 const (
 	Red     = "\033[31m"
 	Black   = "\033[1;30m"

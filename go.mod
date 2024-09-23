@@ -1,3 +1,3 @@
-module github.com/0bvim/octobot
+module github.com/0bvim/goctobot
 
 go 1.23.1
