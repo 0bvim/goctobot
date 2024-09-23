@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/go_rest_api/pkg/utils"
+	"github.com/0bvim/goctobot/utils"
 )
 
 func main() {
