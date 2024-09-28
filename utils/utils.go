@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 )
 
@@ -38,4 +41,44 @@ func GetToken() string {
 		os.Exit(0)
 	}
 	return personalGithubToken
+}
+
+func GetUser(token string) string {
+	// creating a new request
+	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+
+	// set authorization header
+	req.Header.Set("Authorization", "token "+token)
+
+	//send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Error sending request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	//check if response is OK
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Unexpected status doe: %d", resp.StatusCode)
+	}
+
+	// parsing responde body
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Fatalf("Error decoding JSON response: %v", err)
+	}
+
+	var user string
+	// extract the Github login
+	if login, ok := result["login"].(string); ok {
+		user = login
+	} else {
+		log.Fatal("Login not found in the response.")
+	}
+
+	return user
 }
