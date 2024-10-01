@@ -1,4 +1,4 @@
-APP_NAME=goctobot
+APP_NAME := goctobot
 
 all:
 	@go build -o $(APP_NAME) cmd/application/main.go
