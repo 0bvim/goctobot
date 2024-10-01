@@ -1,18 +1,3 @@
-// package main
-//
-// import (
-// 	"fmt"
-//
-// 	"github.com/0bvim/goctobot/utils"
-// )
-//
-// func main() {
-// 	token := utils.GetToken() // package name to call the functions
-// 	user := utils.GetUser(token)
-// 	fmt.Println(user)
-// 	fmt.Println("Success " + token)
-// }
-
 package main
 
 import (
@@ -59,7 +44,7 @@ After setting up the token, you can run OctoBot commands with:
 func handleRateLimit(count *int) {
 	*count++
 	delay := time.Duration(60*(*count)) * time.Second
-	fmt.Printf("Rate limit exceeded. Waiting for %03d seconds...\n", delay)
+	fmt.Printf("Rate limit exceeded. Waiting for %3.f seconds...\n", delay.Seconds())
 	time.Sleep(delay)
 }
 

@@ -87,7 +87,7 @@ func GetUser(token string) string {
 // logFollowUnfollow logs the action of following or unfollowing a user with a timestamp.
 func LogFollowUnfollow(username, action string) error {
 	// Open the log file in append mode, or create it if it doesn't exist
-	file, err := os.OpenFile("follow_unfollow_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
