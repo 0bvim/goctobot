@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const (
@@ -81,4 +82,28 @@ func GetUser(token string) string {
 	}
 
 	return user
+}
+
+// logFollowUnfollow logs the action of following or unfollowing a user with a timestamp.
+func LogFollowUnfollow(username, action string) error {
+	// Open the log file in append mode, or create it if it doesn't exist
+	file, err := os.OpenFile("follow_unfollow_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Get the current time for the timestamp
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+
+	// Create the log entry
+	logEntry := fmt.Sprintf("[%s] %s: %s\n", timestamp, action, username)
+
+	// Write the log entry to the file
+	_, err = file.WriteString(logEntry)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
