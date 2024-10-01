@@ -24,21 +24,6 @@ type User struct {
 func init() {
 	// Check if the token is set
 	personalGithubToken = os.Getenv("personal_github_token")
-	if personalGithubToken == "" {
-		fmt.Println(`Error: 'personal_github_token' environment variable not set.
-To resolve this:
-1. Generate a GitHub personal access token with the 'user:follow' and 'read:user' scopes.
-2. Set the token in your environment with:
-   export personal_github_token="your_token_here"
-3. To make this change permanent, add it to your '~/.bashrc' with:
-   echo 'export personal_github_token="your_token_here"' >> ~/.bashrc
-   source ~/.bashrc
-
-After setting up the token, you can run OctoBot commands with:
-   ghbot <command> [username]
-`)
-		os.Exit(1)
-	}
 }
 
 func handleRateLimit(count *int) {

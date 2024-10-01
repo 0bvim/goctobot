@@ -39,7 +39,7 @@ func GetToken() string {
       ghbot <command> [username]
 
       For more details, visit the GitHub repository.`))
-		os.Exit(0)
+		os.Exit(1)
 	}
 	return personalGithubToken
 }
