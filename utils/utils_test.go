@@ -60,7 +60,7 @@ func TestColorized(t *testing.T) {
 // 	}
 // }
 
-// // Helper function to capture output
+// Helper function to capture output
 // func captureOutput(f func()) string {
 // 	var buf bytes.Buffer
 // 	writer := &buf
@@ -68,8 +68,29 @@ func TestColorized(t *testing.T) {
 // 	// Redirect stdout to capture output
 // 	old := os.Stdout
 // 	defer func() { os.Stdout = old }()
-// 	os.Stdout = writer
+// 	os.Stdout = writer.Bytes()
 //
 // 	f()
 // 	return buf.String()
+// }
+
+// func captureOutput(f func()) string {
+// 	var buf bytes.Buffer
+// 	old := os.Stdout
+// 	_, w, _ := os.Pipe()
+// 	os.Stdout = w
+//
+// 	defer func() {
+// 		w.Close()
+// 		os.Stdout = old
+// 	}()
+//
+// 	f()
+//
+// 	outC := make(chan []byte, 1)
+// 	go func() {
+// 		outC <- buf.Bytes()
+// 	}()
+//
+// 	return string(<-outC)
 // }
