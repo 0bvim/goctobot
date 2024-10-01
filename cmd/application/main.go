@@ -59,7 +59,7 @@ After setting up the token, you can run OctoBot commands with:
 func handleRateLimit(count *int) {
 	*count++
 	delay := time.Duration(60*(*count)) * time.Second
-	fmt.Printf("Rate limit exceeded. Waiting for %d seconds...\n", delay)
+	fmt.Printf("Rate limit exceeded. Waiting for %03d seconds...\n", delay)
 	time.Sleep(delay)
 }
 
@@ -165,6 +165,10 @@ func processUsers(users []string, command string) {
 			go unfollowUser(user, &count, &wg)
 		} else if command == "follow" {
 			go followUser(user, &count, &wg)
+		}
+		err := utils.LogFollowUnfollow(user, command)
+		if err != nil {
+			fmt.Println("Error loggin"+command+"action:", err)
 		}
 	}
 	wg.Wait()
