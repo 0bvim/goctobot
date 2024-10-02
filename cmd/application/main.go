@@ -106,7 +106,7 @@ func unfollowUser(user string, count *int, wg *sync.WaitGroup) {
 		fmt.Printf("Error unfollowing user %s: %v\n", user, err)
 		return
 	}
-	req.Header.Set("Authorization", "token "+personalGithubToken)
+	req.Header.Set("Authorization", "token"+personalGithubToken)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -240,5 +240,6 @@ func userInList(user User, list []User) bool {
 			return true
 		}
 	}
+
 	return false
 }
