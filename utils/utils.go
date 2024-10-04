@@ -22,12 +22,10 @@ func Colorize(color string, text string) string {
 	return color + text + Reset
 }
 
-func GetToken() string {
-	personalGithubToken := os.Getenv("personal_github_token")
-	if personalGithubToken == "" {
-		fmt.Println(Colorize(Red, "Error: 'personal_github_token' environment variable not set."))
-		fmt.Println(Colorize(Magenta, "To resolve this: "))
-		fmt.Println(Colorize(Green, `
+func PrintInstructions() {
+	fmt.Println(Colorize(Red, "Error: 'personal_github_token' environment variable not set."))
+	fmt.Println(Colorize(Magenta, "To resolve this: "))
+	fmt.Println(Colorize(Green, `
       1. Generate a GitHub personal access token with the 'user:follow' and 'read:user' scopes at https://github.com/settings/tokens.
       2. Set the token in your environment with:
       export personal_github_token="your_token_here"
@@ -39,6 +37,12 @@ func GetToken() string {
       ghbot <command> [username]
 
       For more details, visit the GitHub repository.`))
+}
+
+func GetToken() string {
+	personalGithubToken := os.Getenv("personal_github_token")
+	if personalGithubToken == "" {
+		PrintInstructions()
 		os.Exit(1)
 	}
 	return personalGithubToken

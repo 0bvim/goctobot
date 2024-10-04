@@ -106,7 +106,7 @@ func unfollowUser(user string, count *int, wg *sync.WaitGroup) {
 		fmt.Printf("Error unfollowing user %s: %v\n", user, err)
 		return
 	}
-	req.Header.Set("Authorization", "token"+personalGithubToken)
+	req.Header.Set("Authorization", "token "+personalGithubToken)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -183,6 +183,11 @@ func getNextURL(resp *http.Response) string {
 }
 
 func main() {
+	if len(os.Args) == 1 {
+		utils.PrintInstructions()
+		os.Exit(1)
+	}
+
 	command := os.Args[1]
 	var targetUser string
 	if len(os.Args) > 2 {
