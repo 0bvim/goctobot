@@ -23,7 +23,13 @@ type User struct {
 
 func init() {
 	// Check if the token is set
-	personalGithubToken = os.Getenv("personal_github_token")
+	personalGithubToken = utils.GetToken()
+
+	// check args
+	if len(os.Args) == 1 {
+		utils.PrintHelp()
+		os.Exit(1)
+	}
 }
 
 func handleRateLimit(count *int) {
@@ -183,11 +189,6 @@ func getNextURL(resp *http.Response) string {
 }
 
 func main() {
-	if len(os.Args) == 1 {
-		utils.PrintInstructions()
-		os.Exit(1)
-	}
-
 	command := os.Args[1]
 	var targetUser string
 	if len(os.Args) > 2 {
