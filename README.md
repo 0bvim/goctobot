@@ -8,20 +8,24 @@
 </a>
 
 
-# OctoBot
+# GoctoBot
 
 Tired of OctoCat hogging the spotlight?
 
 ### Installation
 
-<pre>
-curl -s https://raw.githubusercontent.com/X3ric/octobot/main/install | bash
-</pre>
+```bash
+git clone git@github.com:0bvim/goctobot.git
+# or
+gh repo clone 0bvim/goctobot
+cd goctobot
+make
+```
 
 ### Usage
 
 <pre>
-ghbot &lt;command&gt; [username]
+./goctobot &lt;command&gt; [username]
 </pre>
 
 <pre>
@@ -32,10 +36,11 @@ followers — Show count of your followers.
 </pre>
 
 <br>
-<p align="center">
-<a href="https://archlinux.org">
-  <img alt="Arch Linux" src="https://img.shields.io/badge/Arch_Linux-1793D1?style=for-the-badge&logo=arch-linux&logoColor=D9E0EE&color=000000&labelColor=97A4E2"/>
-</a>
-</p>
+
+### Coming soon
+<pre>
+  * Allow list -> When you run unfollow command you will can have a file in repository with usernames that you don't want unfollow even if them don't follow you back. Like Torvalds, Thompson and so forth.
+  * Deny list -> When you run follow [username] command and don't want to follow someone is just put name in a file to.
+</pre>
 
 </div>
