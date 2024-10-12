@@ -14,13 +14,13 @@ Tired of OctoCat hogging the spotlight?
 
 ### Installation
 
-```bash
+<pre>
 git clone git@github.com:0bvim/goctobot.git
 # or
 gh repo clone 0bvim/goctobot
 cd goctobot
 make
-```
+</pre>
 
 ### Usage
 
