@@ -1,9 +1,17 @@
 package usecase
 
-func (u *MyUser) FetchFollowing() {
-	//TODO: Implement this function
+type IUseractions interface {
+	FetchFollowing()
+	FetchFollowers(count *int)
+	Unfollow()
+	Follow()
 }
 
-func (u *MyUser) FetchFollowers() {
-	//TODO: Implement this function
+func GetFollows(u IUseractions, count *int) {
+	u.FetchFollowers(count)
+	u.FetchFollowing()
+}
+
+func Follow(u IUseractions, username string) {
+	u.Follow()
 }
