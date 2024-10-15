@@ -9,6 +9,8 @@ fclean:
 	@rm $(APP_NAME)
 	@echo "Removed App"
 
+re: fclean all
+
 tests:
 	@go test -v ./...
 
