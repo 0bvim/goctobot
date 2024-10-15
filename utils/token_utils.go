@@ -8,9 +8,9 @@ import (
 )
 
 func printInvalidToken() {
-	fmt.Println(Colorize(Red, "Error: 'personal_github_token' environment variable not set."))
-	fmt.Println(Colorize(Magenta, "To solve this: "))
-	fmt.Println(Colorize(Green, `
+	Colorize(Red, "Error: 'personal_github_token' environment variable not set.")
+	Colorize(Magenta, "To solve this: ")
+	Colorize(Green, `
       1. Generate a GitHub personal access token with the 'user:follow' and 'read:user' scopes at https://github.com/settings/tokens.
       2. Set the token in your environment with:
       export personal_github_token="your_token_here"
@@ -21,7 +21,7 @@ func printInvalidToken() {
       After setting up the token, you can run OctoBot commands with:
       ghbot <command> [username]
 
-      For more details, visit the GitHub repository.`))
+      For more details, visit the GitHub repository.`)
 }
 
 func ValidToken(token string) error {
@@ -40,11 +40,13 @@ func ValidToken(token string) error {
 
 func GetToken() string {
 	personalGithubToken := os.Getenv("personal_github_token")
+
 	err := ValidToken(personalGithubToken)
 	if err != nil {
 		printInvalidToken()
 		os.Exit(1)
 	}
+
 	return personalGithubToken
 }
 

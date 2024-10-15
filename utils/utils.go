@@ -17,16 +17,16 @@ const (
 )
 
 // Function to wrap text with color codes
-func Colorize(color string, text string) string {
-	return color + text + Reset
+func Colorize(color string, text string) {
+	fmt.Println(color + text + Reset)
 }
 
 func PrintHelp() {
-	fmt.Println(Colorize(Magenta, "Commands:"))
-	fmt.Println(Colorize(Red, "- follow <github_user>: Follow a GitHub user"))
-	fmt.Println(Colorize(Red, "- unfollow: Unfollow a user"))
-	fmt.Println(Colorize(Red, "- following: List users you're following"))
-	fmt.Println(Colorize(Red, "- followers: List your followers"))
+	Colorize(Magenta, "Commands:")
+	Colorize(Green, "- follow <github_user>: Follow a GitHub user")
+	Colorize(Green, "- unfollow: Unfollow users that not follow you back")
+	Colorize(Green, "- following: List users you're following")
+	Colorize(Green, "- followers: List your followers")
 }
 
 func GetUser(token string) string {
