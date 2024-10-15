@@ -30,7 +30,7 @@ func PrintHelp() {
 }
 
 func GetUser(token string) string {
-	resp, _ := requestMaker(token)
+	resp, _ := RequestMaker(token)
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
@@ -65,4 +65,11 @@ func LogFollowUnfollow(username, action string) error {
 	}
 
 	return nil
+}
+
+func HandleRateLimit(count *int) {
+	*count++
+	delay := time.Duration(60*(*count)) * time.Second
+	fmt.Printf("Rate limit exceeded. Waiting for %3.f seconds...\n", delay.Seconds())
+	time.Sleep(delay)
 }

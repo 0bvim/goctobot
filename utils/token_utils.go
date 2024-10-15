@@ -50,7 +50,7 @@ func GetToken() string {
 	return personalGithubToken
 }
 
-func requestMaker(token string) (*http.Response, error) {
+func RequestMaker(token string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)

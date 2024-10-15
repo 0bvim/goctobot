@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/0bvim/goctobot/internal/app/model"
 	"github.com/0bvim/goctobot/utils"
 )
 
@@ -190,9 +191,11 @@ func getNextURL(resp *http.Response) string {
 
 func main() {
 	command := os.Args[1]
-	var targetUser string
+	user := model.MyUser{}
+	user.Token = utils.GetToken()
+
 	if len(os.Args) > 2 {
-		targetUser = os.Args[2]
+		user.TargetUser = os.Args[2]
 	}
 
 	// Capture termination signals
@@ -222,11 +225,11 @@ func main() {
 		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
 		fmt.Printf("You follow %d users.\n", len(following))
 	case "follow":
-		if targetUser == "" {
+		if user.TargetUser == "" {
 			fmt.Print("User to fetch? ")
-			fmt.Scanln(&targetUser)
+			fmt.Scanln(&user.TargetUser)
 		}
-		followers, _ := fetchFollowers(targetUser, new(int))
+		followers, _ := fetchFollowers(user.TargetUser, new(int))
 		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
 		var usersToFollow []string
 		for _, user := range followers {
