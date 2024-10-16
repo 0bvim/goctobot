@@ -60,7 +60,7 @@ func fetchData(url string, count *int) ([]User, error) {
 		}
 
 		allData = append(allData, users...)
-		url = getNextURL(resp)
+		url = utils.GetNextURL(resp)
 	}
 	return allData, nil
 }
@@ -193,6 +193,15 @@ func main() {
 	command := os.Args[1]
 	user := model.MyUser{}
 	user.Token = utils.GetToken()
+	user.Login = utils.GetUser(user.Token)
+	user.FetchFollowers(new(int))
+	user.FetchFollowing(new(int))
+	for i, v := range user.Followers {
+		fmt.Printf("%v - %v\n", i+1, v)
+	}
+	for i, v := range user.Following {
+		fmt.Printf("%v - %v\n", i+1, v)
+	}
 
 	if len(os.Args) > 2 {
 		user.TargetUser = os.Args[2]
@@ -207,10 +216,11 @@ func main() {
 		os.Exit(1)
 	}()
 
+	following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
+	followers, _ := fetchFollowers(utils.GetUser(personalGithubToken), new(int))
+
 	switch command {
 	case "unfollow":
-		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
-		followers, _ := fetchFollowers(utils.GetUser(personalGithubToken), new(int))
 		var usersToUnfollow []string
 		for _, user := range following {
 			if !userInList(user, followers) {
@@ -219,10 +229,8 @@ func main() {
 		}
 		processUsers(usersToUnfollow, "unfollow")
 	case "followers":
-		followers, _ := fetchFollowers(utils.GetUser(personalGithubToken), new(int))
 		fmt.Printf("You have %d followers.\n", len(followers))
 	case "following":
-		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
 		fmt.Printf("You follow %d users.\n", len(following))
 	case "follow":
 		if user.TargetUser == "" {
@@ -230,7 +238,6 @@ func main() {
 			fmt.Scanln(&user.TargetUser)
 		}
 		followers, _ := fetchFollowers(user.TargetUser, new(int))
-		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
 		var usersToFollow []string
 		for _, user := range followers {
 			if !userInList(user, following) {

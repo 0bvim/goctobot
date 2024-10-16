@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/0bvim/goctobot/utils"
@@ -31,12 +33,12 @@ type User struct {
 
 func (u *MyUser) FetchFollowing(count *int) {
 	url := fmt.Sprintf(FOLLOWING_URL, u.Login)
-	u.fetchData(url, count)
+	fetchData(url, "following", u, count)
 }
 
 func (u *MyUser) FetchFollowers(count *int) {
 	url := fmt.Sprintf(FOLLOWERS_URL, u.Login)
-	u.fetchData(url, count)
+	fetchData(url, "followers", u, count)
 }
 
 func (u *MyUser) Unfollow() {
@@ -47,11 +49,11 @@ func (u *MyUser) Follow() {
 	//TODO: Implement this function
 }
 
-func (u *MyUser) fetchData(url, action string, count *int) ([]User, error) {
+func fetchData(url, action string, u *MyUser, count *int) {
 	for url != "" {
-		resp, err := utils.RequestMaker(u.Token)
+		resp, err := utils.FetchRequest(url)
 		if err != nil {
-			return nil, err
+			log.Fatalf("Error in request %s", err)
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests {
@@ -61,16 +63,18 @@ func (u *MyUser) fetchData(url, action string, count *int) ([]User, error) {
 
 		var users []User
 		if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-			return nil, err
+			body, err := io.ReadAll(resp.Body)
+			fmt.Printf("body: %v\n", body)
+			log.Fatalf("Error in request %s", err)
 		}
 
-		if action == "follow" {
+		switch action {
+		case "followers":
 			u.Followers = append(u.Followers, users...)
-		} else if action == "unfollow" {
+		case "following":
 			u.Following = append(u.Following, users...)
 		}
 
-		// url getNextUrl implement
+		url = utils.GetNextURL(resp)
 	}
-	return nil, nil
 }

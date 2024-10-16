@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -30,7 +33,7 @@ func PrintHelp() {
 }
 
 func GetUser(token string) string {
-	resp, _ := RequestMaker(token)
+	resp, _ := LoginRequest(token)
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
@@ -72,4 +75,23 @@ func HandleRateLimit(count *int) {
 	delay := time.Duration(60*(*count)) * time.Second
 	fmt.Printf("Rate limit exceeded. Waiting for %3.f seconds...\n", delay.Seconds())
 	time.Sleep(delay)
+}
+
+func GetNextURL(resp *http.Response) string {
+	linkHeader := resp.Header.Get("Link")
+	if linkHeader == "" {
+		return ""
+	}
+
+	links := strings.Split(linkHeader, ",")
+	re := regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"`)
+
+	for _, link := range links {
+		matches := re.FindStringSubmatch(link)
+		if len(matches) == 3 && matches[2] == "next" {
+			return matches[1]
+		}
+	}
+
+	return ""
 }

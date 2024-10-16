@@ -25,7 +25,7 @@ func printInvalidToken() {
 }
 
 func ValidToken(token string) error {
-	resp, err := requestMaker(token)
+	resp, err := LoginRequest(token)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func GetToken() string {
 	return personalGithubToken
 }
 
-func RequestMaker(token string) (*http.Response, error) {
+func LoginRequest(token string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
@@ -68,5 +68,18 @@ func RequestMaker(token string) (*http.Response, error) {
 		return nil, fmt.Errorf("token validation failed: received status code %d", resp.StatusCode)
 	}
 
+	return resp, nil
+}
+
+func FetchRequest(url string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "token "+GetToken())
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	return resp, nil
 }
