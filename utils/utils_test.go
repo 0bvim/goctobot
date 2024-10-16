@@ -1,29 +1,24 @@
 package utils
 
-import (
-	"fmt"
-	"testing"
-)
-
-func TestColorized(t *testing.T) {
-	tests := []struct {
-		color  string
-		text   string
-		expect string
-	}{
-		{Red, "Hello", Red + "Hello" + Reset},
-		{Green, "World", Green + "World" + Reset},
-	}
-
-	for _, tt := range tests {
-		t.Run(fmt.Sprintf("Colorize(%q, %q)", tt.color, tt.text), func(t *testing.T) {
-			result := Colorize(tt.color, tt.text)
-			if result != tt.expect {
-				t.Errorf("Colorize(%q, %q) = %q; want %q", tt.color, tt.text, result, tt.expect)
-			}
-		})
-	}
-}
+// func TestColorized(t *testing.T) {
+// 	tests := []struct {
+// 		color  string
+// 		text   string
+// 		expect string
+// 	}{
+// 		{Red, "Hello", Red + "Hello" + Reset},
+// 		{Green, "World", Green + "World" + Reset},
+// 	}
+//
+// 	for _, tt := range tests {
+// 		t.Run(fmt.Sprintf("Colorize(%q, %q)", tt.color, tt.text), func(t *testing.T) {
+// 			result := Colorize(tt.color, tt.text)
+// 			if result != tt.expect {
+// 				t.Errorf("Colorize(%q, %q) = %q; want %q", tt.color, tt.text, result, tt.expect)
+// 			}
+// 		})
+// 	}
+// }
 
 // func TestGetToken(t *testing.T) {
 // 	// Save the original value of the environment variable to restore later

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -18,78 +20,28 @@ const (
 )
 
 // Function to wrap text with color codes
-func Colorize(color string, text string) string {
-	return color + text + Reset
+func Colorize(color string, text string) {
+	fmt.Println(color + text + Reset)
 }
 
 func PrintHelp() {
-	fmt.Println(Colorize(Magenta, "Commands:"))
-	fmt.Println(Colorize(Red, "- follow <github_user>: Follow a GitHub user"))
-	fmt.Println(Colorize(Red, "- unfollow: Unfollow a user"))
-	fmt.Println(Colorize(Red, "- following: List users you're following"))
-	fmt.Println(Colorize(Red, "- followers: List your followers"))
-}
-
-func ValidToken(token string) bool {
-	if token == "" {
-		fmt.Println(Colorize(Red, "Error: 'personal_github_token' environment variable not set."))
-		fmt.Println(Colorize(Magenta, "To solve this: "))
-		fmt.Println(Colorize(Green, `
-      1. Generate a GitHub personal access token with the 'user:follow' and 'read:user' scopes at https://github.com/settings/tokens.
-      2. Set the token in your environment with:
-      export personal_github_token="your_token_here"
-      3. To make this change permanent, add it to your '~/.bashrc' with:
-      echo 'export personal_github_token="your_token_here"' >> ~/.bashrc
-      source ~/.bashrc
-
-      After setting up the token, you can run OctoBot commands with:
-      ghbot <command> [username]
-
-      For more details, visit the GitHub repository.`))
-		return false
-	}
-	return true
-}
-
-func GetToken() string {
-	personalGithubToken := os.Getenv("personal_github_token")
-	if !ValidToken(personalGithubToken) {
-		os.Exit(1)
-	}
-	return personalGithubToken
+	Colorize(Magenta, "Commands:")
+	Colorize(Green, "- follow <github_user>: Follow a GitHub user")
+	Colorize(Green, "- unfollow: Unfollow users that not follow you back")
+	Colorize(Green, "- following: List users you're following")
+	Colorize(Green, "- followers: List your followers")
 }
 
 func GetUser(token string) string {
-	// creating a new request
-	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-
-	// set authorization header
-	req.Header.Set("Authorization", "token "+token)
-
-	//send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
-	}
+	resp, _ := LoginRequest(token)
 	defer resp.Body.Close()
 
-	//check if response is OK
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Unexpected status doe: %d", resp.StatusCode)
-	}
-
-	// parsing responde body
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Fatalf("Error decoding JSON response: %v", err)
 	}
 
 	var user string
-	// extract the Github login
 	if login, ok := result["login"].(string); ok {
 		user = login
 	} else {
@@ -101,24 +53,45 @@ func GetUser(token string) string {
 
 // logFollowUnfollow logs the action of following or unfollowing a user with a timestamp.
 func LogFollowUnfollow(username, action string) error {
-	// Open the log file in append mode, or create it if it doesn't exist
 	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Get the current time for the timestamp
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	// Create the log entry
 	logEntry := fmt.Sprintf("[%s] %s: %s\n", timestamp, action, username)
 
-	// Write the log entry to the file
 	_, err = file.WriteString(logEntry)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func HandleRateLimit(count *int) {
+	*count++
+	delay := time.Duration(60*(*count)) * time.Second
+	fmt.Printf("Rate limit exceeded. Waiting for %3.f seconds...\n", delay.Seconds())
+	time.Sleep(delay)
+}
+
+func GetNextURL(resp *http.Response) string {
+	linkHeader := resp.Header.Get("Link")
+	if linkHeader == "" {
+		return ""
+	}
+
+	links := strings.Split(linkHeader, ",")
+	re := regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"`)
+
+	for _, link := range links {
+		matches := re.FindStringSubmatch(link)
+		if len(matches) == 3 && matches[2] == "next" {
+			return matches[1]
+		}
+	}
+
+	return ""
 }

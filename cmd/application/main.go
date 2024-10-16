@@ -1,198 +1,37 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
-	"regexp"
-	"strings"
-	"sync"
 	"syscall"
-	"time"
 
+	"github.com/0bvim/goctobot/internal/app/model"
 	"github.com/0bvim/goctobot/utils"
 )
 
-var personalGithubToken string
-
-type User struct {
-	Login string `json:"login"`
-}
-
 func init() {
-	// Check if the token is set
-	personalGithubToken = utils.GetToken()
-
 	// check args
 	if len(os.Args) == 1 {
 		utils.PrintHelp()
 		os.Exit(1)
 	}
-}
 
-func handleRateLimit(count *int) {
-	*count++
-	delay := time.Duration(60*(*count)) * time.Second
-	fmt.Printf("Rate limit exceeded. Waiting for %3.f seconds...\n", delay.Seconds())
-	time.Sleep(delay)
-}
-
-func fetchData(url string, count *int) ([]User, error) {
-	var allData []User
-
-	for url != "" {
-		resp, err := makeRequest(url)
-		if err != nil {
-			return nil, err
-		}
-
-		if resp.StatusCode == http.StatusTooManyRequests {
-			handleRateLimit(count)
-			continue
-		}
-
-		var users []User
-		if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-			return nil, err
-		}
-
-		allData = append(allData, users...)
-		url = getNextURL(resp)
-	}
-	return allData, nil
-}
-
-func fetchFollowers(user string, count *int) ([]User, error) {
-	url := fmt.Sprintf("https://api.github.com/users/%s/followers?per_page=100", user)
-	return fetchData(url, count)
-}
-
-func fetchFollowing(user string, count *int) ([]User, error) {
-	url := fmt.Sprintf("https://api.github.com/users/%s/following?per_page=100", user)
-	return fetchData(url, count)
-}
-
-func followUser(user string, count *int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	url := fmt.Sprintf("https://api.github.com/user/following/%s", user)
-	req, err := http.NewRequest("PUT", url, nil)
-	if err != nil {
-		fmt.Printf("Error following user %s: %v\n", user, err)
-		return
-	}
-	req.Header.Set("Authorization", "token "+personalGithubToken)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Printf("Error following user %s: %v\n", user, err)
-		return
-	}
-	defer resp.Body.Close()
-
-	switch resp.StatusCode {
-	case http.StatusNoContent:
-		fmt.Printf("User: %s has been followed!\n", user)
-	case http.StatusForbidden, http.StatusTooManyRequests:
-		handleRateLimit(count)
-		followUser(user, count, wg)
-	default:
-		fmt.Printf("Error following %s: %v\n", user, resp.Status)
-	}
-}
-
-func unfollowUser(user string, count *int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	url := fmt.Sprintf("https://api.github.com/user/following/%s", user)
-	req, err := http.NewRequest("DELETE", url, nil)
-	if err != nil {
-		fmt.Printf("Error unfollowing user %s: %v\n", user, err)
-		return
-	}
-	req.Header.Set("Authorization", "token "+personalGithubToken)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Printf("Error unfollowing user %s: %v\n", user, err)
-		return
-	}
-	defer resp.Body.Close()
-
-	switch resp.StatusCode {
-	case http.StatusNoContent:
-		fmt.Printf("User: %s has been unfollowed!\n", user)
-	case http.StatusForbidden, http.StatusTooManyRequests:
-		handleRateLimit(count)
-		unfollowUser(user, count, wg)
-	default:
-		fmt.Printf("Error unfollowing %s: %v\n", user, resp.Status)
-	}
-}
-
-func processUsers(users []string, command string) {
-	var wg sync.WaitGroup
-	count := 0
-	for _, user := range users {
-		wg.Add(1)
-		if command == "unfollow" {
-			go unfollowUser(user, &count, &wg)
-		} else if command == "follow" {
-			go followUser(user, &count, &wg)
-		}
-		err := utils.LogFollowUnfollow(user, command)
-		if err != nil {
-			fmt.Println("Error loggin"+command+"action:", err)
-		}
-	}
-	wg.Wait()
-}
-
-func makeRequest(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "token "+personalGithubToken)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func getNextURL(resp *http.Response) string {
-	linkHeader := resp.Header.Get("Link")
-	if linkHeader == "" {
-		return ""
-	}
-
-	// Split the header by comma to handle multiple links
-	links := strings.Split(linkHeader, ",")
-
-	// Regular expression to capture the URL and its rel type
-	re := regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"`)
-
-	// Iterate over each link
-	for _, link := range links {
-		matches := re.FindStringSubmatch(link)
-		if len(matches) == 3 && matches[2] == "next" {
-			// Return the URL if the rel type is "next"
-			return matches[1]
-		}
-	}
-
-	// Return an empty string if no "next" link is found
-	return ""
+	utils.GetToken()
 }
 
 func main() {
 	command := os.Args[1]
-	var targetUser string
+
+	user := model.MyUser{}
+	user.Token = utils.GetToken()
+	user.Login = utils.GetUser(user.Token)
+	user.FetchFollowers(new(int))
+	user.FetchFollowing(new(int))
+	//TODO: implement user.FetchList to allow and deny list
+
 	if len(os.Args) > 2 {
-		targetUser = os.Args[2]
+		user.TargetUser = os.Args[2]
 	}
 
 	// Capture termination signals
@@ -206,46 +45,14 @@ func main() {
 
 	switch command {
 	case "unfollow":
-		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
-		followers, _ := fetchFollowers(utils.GetUser(personalGithubToken), new(int))
-		var usersToUnfollow []string
-		for _, user := range following {
-			if !userInList(user, followers) {
-				usersToUnfollow = append(usersToUnfollow, user.Login)
-			}
-		}
-		processUsers(usersToUnfollow, "unfollow")
+		user.Unfollow()
 	case "followers":
-		followers, _ := fetchFollowers(utils.GetUser(personalGithubToken), new(int))
-		fmt.Printf("You have %d followers.\n", len(followers))
+		fmt.Printf("You have %d followers.\n", len(user.Followers))
 	case "following":
-		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
-		fmt.Printf("You follow %d users.\n", len(following))
+		fmt.Printf("You follow %d users.\n", len(user.Following))
 	case "follow":
-		if targetUser == "" {
-			fmt.Print("User to fetch? ")
-			fmt.Scanln(&targetUser)
-		}
-		followers, _ := fetchFollowers(targetUser, new(int))
-		following, _ := fetchFollowing(utils.GetUser(personalGithubToken), new(int))
-		var usersToFollow []string
-		for _, user := range followers {
-			if !userInList(user, following) {
-				usersToFollow = append(usersToFollow, user.Login)
-			}
-		}
-		processUsers(usersToFollow, "follow")
+		user.Follow()
 	default:
 		fmt.Println("Invalid command")
 	}
-}
-
-func userInList(user User, list []User) bool {
-	for _, u := range list {
-		if u.Login == user.Login {
-			return true
-		}
-	}
-
-	return false
 }
