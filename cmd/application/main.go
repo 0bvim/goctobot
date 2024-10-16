@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"unsafe"
 
 	"github.com/0bvim/goctobot/internal/app/model"
 	"github.com/0bvim/goctobot/utils"
@@ -13,7 +12,6 @@ import (
 
 func init() {
 	// check args
-	fmt.Printf("Size = %d\n", unsafe.Sizeof(model.MyUser{}))
 	if len(os.Args) == 1 {
 		utils.PrintHelp()
 		os.Exit(1)

@@ -111,9 +111,10 @@ func processUsers(users []string, command string) {
 	count := 0
 	for _, user := range users {
 		wg.Add(1)
-		if command == "unfollow" {
+		switch command {
+		case "unfollow":
 			go unfollowUser(user, &count, &wg)
-		} else if command == "follow" {
+		case "follow":
 			go followUser(user, &count, &wg)
 		}
 		err := utils.LogFollowUnfollow(user, command)
