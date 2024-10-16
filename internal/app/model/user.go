@@ -69,7 +69,7 @@ func (u *MyUser) Follow() {
 	var usersToFollow []string
 	for _, user := range u.Followers {
 		if !userInList(user, u.Following) || u.UserStatus[user.Login] == "Deny" {
-			usersToFollow = append(usersToFollow, u.Login)
+			usersToFollow = append(usersToFollow, user.Login)
 		}
 	}
 
