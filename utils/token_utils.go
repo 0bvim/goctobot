@@ -19,7 +19,7 @@ func printInvalidToken() {
       source ~/.bashrc
 
       After setting up the token, you can run OctoBot commands with:
-      ghbot <command> [username]
+      goctobot <command> [username]
 
       For more details, visit the GitHub repository.`)
 }
