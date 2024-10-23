@@ -1,11 +1,13 @@
 package model
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/0bvim/goctobot/utils"
@@ -16,10 +18,12 @@ const (
 	FOLLOWERS_URL = "https://api.github.com/users/%s/followers?per_page=100"
 )
 
+//go:embed userlist.json
+var userList []byte
+
 // Main user struct
 type MyUser struct {
 	Followers  []User
-	Denied     []User
 	Following  []User
 	Login      string `json:"login"`
 	TargetUser string
@@ -30,6 +34,17 @@ type MyUser struct {
 // a single user struct
 type User struct {
 	Login string `json:"login"`
+}
+
+func (u *MyUser) FetchAllowDenyList() {
+	err := json.Unmarshal(userList, &u.UserStatus)
+	if err != nil {
+		fmt.Printf("Error to create allow and deny list")
+	}
+
+	for key, value := range u.UserStatus {
+		u.UserStatus[key] = strings.ToLower(value)
+	}
 }
 
 func (u *MyUser) FetchFollowing(count *int) {
@@ -51,7 +66,7 @@ func (u *MyUser) FetchFollowers(count *int) {
 func (u *MyUser) Unfollow() {
 	var usersToUnfollow []string
 	for _, user := range u.Following {
-		if !userInList(user, u.Followers) || u.UserStatus[user.Login] == "Allow" {
+		if !userInList(user, u.Followers) || u.UserStatus[user.Login] == "allow" {
 			usersToUnfollow = append(usersToUnfollow, user.Login)
 		}
 	}
@@ -68,12 +83,17 @@ func (u *MyUser) Follow() {
 
 	var usersToFollow []string
 	for _, user := range u.Followers {
-		if !userInList(user, u.Following) || u.UserStatus[user.Login] == "Deny" {
+		if u.UserStatus[user.Login] == "deny" {
+			continue
+		}
+		if !userInList(user, u.Following) {
 			usersToFollow = append(usersToFollow, user.Login)
 		}
 	}
 
-	processUsers(usersToFollow, "follow")
+	if len(usersToFollow) > 0 {
+		processUsers(usersToFollow, "follow")
+	}
 }
 
 func fetchData(url, action string, u *MyUser, count *int) {

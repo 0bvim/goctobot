@@ -26,9 +26,9 @@ func main() {
 	user := model.MyUser{}
 	user.Token = utils.GetToken()
 	user.Login = utils.GetUser(user.Token)
-	user.FetchFollowers(new(int))
-	user.FetchFollowing(new(int))
-	//TODO: implement user.FetchList to allow and deny list
+	go user.FetchFollowers(new(int))
+	go user.FetchFollowing(new(int))
+	go user.FetchAllowDenyList()
 
 	if len(os.Args) > 2 {
 		user.TargetUser = os.Args[2]
