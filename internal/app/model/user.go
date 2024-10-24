@@ -79,7 +79,10 @@ func (u *MyUser) Follow() {
 		fmt.Print("User to fetch? ")
 		fmt.Scanln(&u.TargetUser)
 	}
-	u.FetchFollowers(new(int))
+
+	if u.Login != u.TargetUser {
+		u.FetchFollowers(new(int))
+	}
 
 	var usersToFollow []string
 	for _, user := range u.Followers {
