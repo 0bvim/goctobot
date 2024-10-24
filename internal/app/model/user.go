@@ -3,10 +3,11 @@ package model
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
+	. "fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -39,7 +40,7 @@ type User struct {
 func (u *MyUser) FetchAllowDenyList() {
 	err := json.Unmarshal(userList, &u.UserStatus)
 	if err != nil {
-		fmt.Printf("Error to create allow and deny list")
+		Printf("Error to create allow and deny list")
 	}
 
 	for key, value := range u.UserStatus {
@@ -50,16 +51,16 @@ func (u *MyUser) FetchAllowDenyList() {
 func (u *MyUser) FetchFollowing(count *int) {
 	var url string
 	if u.TargetUser != "" {
-		url = fmt.Sprintf(FOLLOWING_URL, u.TargetUser)
+		url = Sprintf(FOLLOWING_URL, u.TargetUser)
 	} else {
-		url = fmt.Sprintf(FOLLOWING_URL, u.Login)
+		url = Sprintf(FOLLOWING_URL, u.Login)
 	}
 
 	fetchData(url, "following", u, count)
 }
 
 func (u *MyUser) FetchFollowers(count *int) {
-	url := fmt.Sprintf(FOLLOWERS_URL, u.Login)
+	url := Sprintf(FOLLOWERS_URL, u.Login)
 	fetchData(url, "followers", u, count)
 }
 
@@ -76,8 +77,12 @@ func (u *MyUser) Unfollow() {
 
 func (u *MyUser) Follow() {
 	if u.TargetUser == "" {
-		fmt.Print("User to fetch? ")
-		fmt.Scanln(&u.TargetUser)
+		Print("User to fetch? ")
+		_, err := Scanln(&u.TargetUser)
+		if err != nil {
+			Println(`Error fetching target user.!`)
+			os.Exit(1)
+		}
 	}
 
 	if u.Login != u.TargetUser {
@@ -114,7 +119,7 @@ func fetchData(url, action string, u *MyUser, count *int) {
 		var users []User
 		if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
 			body, err := io.ReadAll(resp.Body)
-			fmt.Printf("body: %v\n", body)
+			Printf("body: %v\n", body)
 			log.Fatalf("Error in request %s", err)
 		}
 
@@ -142,7 +147,7 @@ func processUsers(users []string, command string) {
 		}
 		err := utils.LogFollowUnfollow(user, command)
 		if err != nil {
-			fmt.Println("Error loggin"+command+"action:", err)
+			Println("Error loggin"+command+"action:", err)
 		}
 	}
 	wg.Wait()
@@ -161,57 +166,67 @@ func userInList(user User, list []User) bool {
 func unfollowUser(user string, count *int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	url := fmt.Sprintf("https://api.github.com/user/following/%s", user)
+	url := Sprintf("https://api.github.com/user/following/%s", user)
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
-		fmt.Printf("Error unfollowing user %s: %v\n", user, err)
+		Printf("Error unfollowing user %s: %v\n", user, err)
 		return
 	}
 	req.Header.Set("Authorization", "token "+utils.GetToken())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("Error unfollowing user %s: %v\n", user, err)
+		Printf("Error unfollowing user %s: %v\n", user, err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing resonse body: %v\n", err)
+		}
+	}(resp.Body)
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
-		fmt.Printf("User: %s has been unfollowed!\n", user)
+		Printf("User: %s has been unfollowed!\n", user)
 	case http.StatusForbidden, http.StatusTooManyRequests:
 		utils.HandleRateLimit(count)
 		unfollowUser(user, count, wg)
 	default:
-		fmt.Printf("Error unfollowing %s: %v\n", user, resp.Status)
+		Printf("Error unfollowing %s: %v\n", user, resp.Status)
 	}
 }
 
 func followUser(user string, count *int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	url := fmt.Sprintf("https://api.github.com/user/following/%s", user)
+	url := Sprintf("https://api.github.com/user/following/%s", user)
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
-		fmt.Printf("Error following user %s: %v\n", user, err)
+		Printf("Error following user %s: %v\n", user, err)
 		return
 	}
 	req.Header.Set("Authorization", "token "+utils.GetToken())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("Error following user %s: %v\n", user, err)
+		Printf("Error following user %s: %v\n", user, err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing resonse body: %v\n", err)
+		}
+	}(resp.Body)
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
-		fmt.Printf("User: %s has been followed!\n", user)
+		Printf("User: %s has been followed!\n", user)
 	case http.StatusForbidden, http.StatusTooManyRequests:
 		utils.HandleRateLimit(count)
 		followUser(user, count, wg)
 	default:
-		fmt.Printf("Error following %s: %v\n", user, resp.Status)
+		Printf("Error following %s: %v\n", user, resp.Status)
 	}
 }
