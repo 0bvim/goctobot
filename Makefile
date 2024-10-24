@@ -1,15 +1,27 @@
 APP_NAME := goctobot
+DIR=bin/
+APPATH=$(DIR)$(APP_NAME)
+MAIN_PATH=cmd/application/main.go
 
-all:
-	@go build -o $(APP_NAME) cmd/application/main.go
+all: dir
+	@go build -gcflags='all=-N -l' -o bin/$(APP_NAME) $(MAIN_PATH)
 	@echo "\033[1;34mGoctoBot Compiled\033[0m"
 	$(call print_usage)
 
+dir:
+	@mkdir -p $(DIR)
+
 fclean:
-	@rm $(APP_NAME)
+	@rm $(APPATH)
 	@echo "Removed App"
 
 re: fclean all
+
+debug:
+	@dlv debug $(MAIN_PATH) -- $(ARGS)
+
+run:
+	@./$(APPATH) $(ARGS)
 
 tests:
 	@go test -v ./...
@@ -26,4 +38,4 @@ define print_usage
 	@echo "  \033[1;36mfollowers\033[0m          - Show count of your followers."
 endef
 
-.PHONY: all fclean tests
+.PHONY: all fclean tests re debug dir

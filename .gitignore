@@ -1,2 +1,4 @@
 *.txt
 goctobot
+.env
+.idea
