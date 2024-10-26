@@ -37,37 +37,50 @@ type User struct {
 	Login string `json:"login"`
 }
 
-func (u *MyUser) FetchAllowDenyList() {
-	err := json.Unmarshal(userList, &u.UserStatus)
+func (receiver *MyUser) PrintFollowing() {
+	Println("Following:", len(receiver.Following))
+}
+
+func (receiver *MyUser) PrintFollowers() {
+	Println("Followers:", len(receiver.Followers))
+}
+
+func (receiver *MyUser) PrintStatus() {
+	receiver.PrintFollowers()
+	receiver.PrintFollowing()
+}
+
+func (receiver *MyUser) FetchAllowDenyList() {
+	err := json.Unmarshal(userList, &receiver.UserStatus)
 	if err != nil {
 		Printf("Error to create allow and deny list")
 	}
 
-	for key, value := range u.UserStatus {
-		u.UserStatus[key] = strings.ToLower(value)
+	for key, value := range receiver.UserStatus {
+		receiver.UserStatus[key] = strings.ToLower(value)
 	}
 }
 
-func (u *MyUser) FetchFollowing(count *int) {
+func (receiver *MyUser) FetchFollowing(count *int) {
 	var url string
-	if u.TargetUser != "" {
-		url = Sprintf(FOLLOWING_URL, u.TargetUser)
+	if receiver.TargetUser != "" {
+		url = Sprintf(FOLLOWING_URL, receiver.TargetUser)
 	} else {
-		url = Sprintf(FOLLOWING_URL, u.Login)
+		url = Sprintf(FOLLOWING_URL, receiver.Login)
 	}
 
-	fetchData(url, "following", u, count)
+	fetchData(url, "following", receiver, count)
 }
 
-func (u *MyUser) FetchFollowers(count *int) {
-	url := Sprintf(FOLLOWERS_URL, u.Login)
-	fetchData(url, "followers", u, count)
+func (receiver *MyUser) FetchFollowers(count *int) {
+	url := Sprintf(FOLLOWERS_URL, receiver.Login)
+	fetchData(url, "followers", receiver, count)
 }
 
-func (u *MyUser) Unfollow() {
+func (receiver *MyUser) Unfollow() {
 	var usersToUnfollow []string
-	for _, user := range u.Following {
-		if !userInList(user, u.Followers) || u.UserStatus[user.Login] == "allow" {
+	for _, user := range receiver.Following {
+		if !userInList(user, receiver.Followers) || receiver.UserStatus[user.Login] == "allow" {
 			usersToUnfollow = append(usersToUnfollow, user.Login)
 		}
 	}
@@ -75,26 +88,26 @@ func (u *MyUser) Unfollow() {
 	processUsers(usersToUnfollow, "unfollow")
 }
 
-func (u *MyUser) Follow() {
-	if u.TargetUser == "" {
+func (receiver *MyUser) Follow() {
+	if receiver.TargetUser == "" {
 		Print("User to fetch? ")
-		_, err := Scanln(&u.TargetUser)
+		_, err := Scanln(&receiver.TargetUser)
 		if err != nil {
 			Println(`Error fetching target user.!`)
 			os.Exit(1)
 		}
 	}
 
-	if u.Login != u.TargetUser {
-		u.FetchFollowers(new(int))
+	if receiver.Login != receiver.TargetUser {
+		receiver.FetchFollowers(new(int))
 	}
 
 	var usersToFollow []string
-	for _, user := range u.Followers {
-		if u.UserStatus[user.Login] == "deny" {
+	for _, user := range receiver.Followers {
+		if receiver.UserStatus[user.Login] == "deny" {
 			continue
 		}
-		if !userInList(user, u.Following) {
+		if !userInList(user, receiver.Following) {
 			usersToFollow = append(usersToFollow, user.Login)
 		}
 	}
