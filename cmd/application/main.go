@@ -54,9 +54,11 @@ func main() {
 	case "unfollow":
 		user.Unfollow()
 	case "followers":
-		fmt.Printf("You have %d followers.\n", len(user.Followers))
+		user.PrintFollowers()
 	case "following":
-		fmt.Printf("You follow %d users.\n", len(user.Following))
+		user.PrintFollowing()
+	case "status":
+		user.PrintStatus()
 	case "follow":
 		user.Follow()
 	default:
