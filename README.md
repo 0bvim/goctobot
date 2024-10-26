@@ -1,5 +1,5 @@
 <div align="center">
-<h1>I finished basic program usages of this program.</h1>
+<h1>I finished basic program usages.</h1>
 <p>I don't use a fork because I can't open issue and for a while I'll need it. </p>
 <p>Here is original repository</p>
   
