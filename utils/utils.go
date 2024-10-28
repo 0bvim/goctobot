@@ -2,7 +2,9 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -30,11 +32,14 @@ func PrintHelp() {
 	Colorize(Green, "- unfollow: Unfollow users that not follow you back")
 	Colorize(Green, "- following: List users you're following")
 	Colorize(Green, "- followers: List your followers")
+	Colorize(Green, "- status: Show bot, followers and following")
 }
 
 func GetUser(token string) string {
 	resp, _ := LoginRequest(token)
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -53,11 +58,21 @@ func GetUser(token string) string {
 
 // logFollowUnfollow logs the action of following or unfollowing a user with a timestamp.
 func LogFollowUnfollow(username, action string) error {
+	if action != "follow" && action != "unfollow" {
+		return errors.New("Invalid follow action")
+	}
+
+	if username == "" {
+		return errors.New("Username not found in the response.")
+	}
+
 	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	logEntry := fmt.Sprintf("[%s] %s: %s\n", timestamp, action, username)
