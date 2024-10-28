@@ -36,6 +36,7 @@ define print_usage
 	@echo "  \033[1;36munfollow\033[0m            - Unfollow who do not follow back."
 	@echo "  \033[1;36mfollowing\033[0m          - Shows count of users you follow."
 	@echo "  \033[1;36mfollowers\033[0m          - Show count of your followers."
+	@echo "  \033[1;36mstatus\033[0m          - Show both followers and following."
 endef
 
 .PHONY: all fclean tests re debug dir
