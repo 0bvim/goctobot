@@ -1,0 +1,25 @@
+package main
+
+import (
+	"log"
+
+	"github.com/0bvim/goctobot/config"
+	"github.com/joho/godotenv"
+)
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	var env config.Config
+	err = config.LoadConfig(&env)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func main() {
+
+}
