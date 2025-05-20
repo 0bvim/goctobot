@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/0bvim/goctobot/cmd"
-	"github.com/0bvim/goctobot/config"
+	"github.com/0bvim/goctobot/internal/config"
 	"github.com/joho/godotenv"
 )
 
