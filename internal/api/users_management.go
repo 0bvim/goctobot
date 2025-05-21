@@ -16,6 +16,15 @@ func (c *GitHubClient) GetLogin(ctx context.Context) (*string, error) {
 	return user.Login, nil
 }
 
+func (c *GitHubClient) GetUser(ctx context.Context) (*github.User, error) {
+	user, _, err := c.client.Users.Get(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (c *GitHubClient) GetFollowers(ctx context.Context, username string) ([]*github.User, error) {
 	user, err := c.GetLogin(ctx)
 	if err != nil {
