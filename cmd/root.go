@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 niviciusdev@gmail.com
-*/
 package cmd
 
 import (
