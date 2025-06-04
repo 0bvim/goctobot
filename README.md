@@ -1,48 +1,79 @@
-<div align="center">
-<h1>I finished basic program usages.</h1>
-<p>I don't use a fork because I can't open issue and for a while I'll need it. </p>
-<p>Here is original repository</p>
-  
-<a href="https://github.com/X3ric/octobot/tree/main" target="_blank" rel="noopener noreferrer">
-  Visit OctoBot Repository on GitHub
-</a>
-
-
 # GoctoBot
 
-Tired of OctoCat hogging the spotlight?
+GoctoBot is a command-line interface (CLI) tool to manage your followers and the people you follow on GitHub. Tired of OctoCat hogging the spotlight? GoctoBot is here to help automate some common social interactions on the platform.
 
-### Installation
+This project is based on the original [OctoBot repository](https://github.com/X3ric/octobot/tree/main).
 
-<pre>
-git clone git@github.com:0bvim/goctobot.git
-# or
+## Features
+
+* **List Counts**: Shows the number of followers you have and the number of users you are following.
+* **Follow Back**: Follows users who follow you, but you don't follow back yet.
+* **Unfollow**: Unfollows users who don't follow you back.
+* **Allow and Deny List**: Allows you to specify users who should never be unfollowed (allow list) or who should never be followed (deny list) through a JSON configuration file.
+
+## Installation
+
+To get started with GoctoBot, you need to clone the repository and build the project.
+
+```bash
+# Clone the repository
 gh repo clone 0bvim/goctobot
+
+# Or use git clone
+git clone git@github.com:0bvim/goctobot.git
+
+# Enter the project directory
 cd goctobot
+
+# Compile the executable
 make
-</pre>
+```
 
-### Usage
 
-<pre>
-./goctobot &lt;command&gt; [username]
-</pre>
+## Configuration
 
-<pre>
-follow [username] — Follow all followers of the specified user.
-unfollow — Unfollow who do not follow back.
-following — Shows count of users you follow.
-followers — Shows count of your followers.
-status - Show both, follower and following
-</pre>
+Before using GoctoBot, you need to configure your GitHub Personal Access Token.
 
-<br>
+1.  Create a file named `.env` in the project's root directory. GoctoBot automatically loads environment variables from this file.
+2.  Add your token to the `.env` file as follows:
 
-### Allow and Deny list.
-To add a username to allow or deny list, you should add in json format in file `userlist.json` under the following path:
-*`internal/app/model/userlist.json`* marking as `deny` or `allow` like this:
+    ```env
+    PERSONAL_GITHUB_TOKEN="your_token_here"
+    ```
 
-</div>
+    GoctoBot requires the `PERSONAL_GITHUB_TOKEN` environment variable to authenticate with the GitHub API. You can generate a new Personal Access Token in your GitHub account's developer settings.
+
+## Usage
+
+The main executable is `goctobot`. Commands are run as follows:
+
+```bash
+./goctobot <command>
+```
+
+
+### Available Commands
+
+* `list`: Displays your current follower and following counts.
+    ```bash
+    ./goctobot list
+    ```
+
+* `follow`: Follows all users who follow you but you don't follow back.
+    ```bash
+    ./goctobot follow
+    ```
+
+* `unfollow`: Unfollows users you follow who do not follow you back.
+    ```bash
+    ./goctobot unfollow
+    ```
+
+### Allow and Deny Lists
+
+You can prevent GoctoBot from unfollowing important accounts (like Linus Torvalds) or following unwanted accounts. To do this, create a `userlist.json` file at the following path: `internal/app/model/userlist.json`.
+
+Add the usernames in the following JSON format:
 
 ```json
 {
@@ -52,13 +83,10 @@ To add a username to allow or deny list, you should add in json format in file `
 }
 ```
 
-* Allow list -> When you run unfollow command you can have a file in repository with usernames that you don't want
-  to unfollow even if them don't follow you back. Like Torvalds, Thompson and so forth.
-* Deny list -> When you run follow [username] command and you don't want to follow someone is just put name in this file too.
 
-<div align="center">
+* **Allow**: Users on this list will not be unfollowed by the `unfollow` command, even if they don't follow you back.
+* **Deny**: Users on this list will not be followed by the `follow` command.
 
-### Coming soon
-Command to add user to allow or deny list file.
+## Dependency Maintenance
 
-</div>
+This project uses [Dependabot](https://docs.github.com/en/code-security/dependabot) to keep the Go Modules dependencies up to date. Checks are performed weekly.
