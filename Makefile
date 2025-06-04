@@ -1,7 +1,7 @@
 APP_NAME := goctobot
 MAIN_PATH=main.go
 
-all: dir
+all:
 	@go build -gcflags='all=-N -l' -o $(APP_NAME) $(MAIN_PATH)
 	@echo "\033[1;34mGoctoBot Compiled\033[0m"
 	@./$(APP_NAME) --help
@@ -35,4 +35,4 @@ define print_usage
 	@echo "  \033[1;36mstatus\033[0m               - Show both followers and following."
 endef
 
-.PHONY: all fclean tests re debug dir
+.PHONY: all fclean tests re debug
